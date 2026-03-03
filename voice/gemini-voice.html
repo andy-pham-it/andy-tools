@@ -539,33 +539,25 @@
       });
 
       btnImage.addEventListener("click", async () => {
-        const key = getApiKey();
-        if (!key) return showError("Cần cấu hình API Key để tạo ảnh.");
-
         btnImage.disabled = true;
         btnImage.innerHTML =
           '<i class="animate-spin" data-lucide="loader-2"></i>';
         lucide.createIcons();
 
-        const prompt =
-          "Cinematic postcard style, a 30-year-old woman with long straight black hair, looking thoughtfully at the horizon, soft morning light, emotional atmosphere, aesthetic background, high quality, motivational vibe.";
+        // Encode the prompt for the URL
+        const prompt = encodeURIComponent(
+          "Cinematic postcard style, a 30-year-old woman with long straight black hair, looking thoughtfully at the horizon, soft morning light, emotional atmosphere, aesthetic background, high quality, motivational vibe.",
+        );
+
+        // Add a random seed to avoid caching
+        const seed = Math.floor(Math.random() * 1000000);
+        const imageUrl = `https://pollinations.ai/p/${prompt}?width=800&height=1000&seed=${seed}&model=flux`;
 
         try {
-          const result = await fetchWithRetry(
-            `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${key}`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                instances: [{ prompt }],
-                parameters: { sampleCount: 1 },
-              }),
-            },
-          );
-
-          if (result.predictions?.[0]?.bytesBase64Encoded) {
-            const base64 = result.predictions[0].bytesBase64Encoded;
-            postcardPreview.innerHTML = `<img src="data:image/png;base64,${base64}" class="w-full h-full object-cover">`;
+          // Preload the image to ensure it's fully loaded before displaying
+          const img = new Image();
+          img.onload = () => {
+            postcardPreview.innerHTML = `<img src="${imageUrl}" class="w-full h-full object-cover">`;
             postcardPreview.appendChild(textOverlay);
             textOverlay.classList.remove("hidden");
             previewDisplay.innerText = mainText.value || "Motivation Postcard";
@@ -579,10 +571,22 @@
                 });
               }, 100);
             }
-          }
+
+            btnImage.disabled = false;
+            btnImage.innerHTML = '<i data-lucide="image"></i> Tạo ảnh Postcard';
+            lucide.createIcons();
+          };
+
+          img.onerror = () => {
+            showError("Lỗi khi tải hình ảnh từ server.");
+            btnImage.disabled = false;
+            btnImage.innerHTML = '<i data-lucide="image"></i> Tạo ảnh Postcard';
+            lucide.createIcons();
+          };
+
+          img.src = imageUrl;
         } catch (err) {
           showError("Lỗi khi tạo hình ảnh.");
-        } finally {
           btnImage.disabled = false;
           btnImage.innerHTML = '<i data-lucide="image"></i> Tạo ảnh Postcard';
           lucide.createIcons();
