@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SoulVoice Studio - Edge Edition (Free TTS)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #10b981;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 50;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal.active {
+        display: flex;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-900 min-h-screen">
+    <div id="app" class="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
+      <!-- Header -->
+      <header
+        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+      >
+        <div class="w-full flex justify-between items-start">
+          <div>
+            <h1
+              class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2"
+            >
+              <i
+                data-lucide="sparkles"
+                class="text-amber-500 w-6 h-6 md:w-8 md:h-8"
+              ></i>
+              SoulVoice Studio
+            </h1>
+            <p class="text-sm md:text-base text-slate-500 mt-1">
+              Bản Edge Edition - Giọng đọc AI tự nhiên miễn phí
+            </p>
+          </div>
+        </div>
+        <div class="flex w-full md:w-auto items-center justify-end gap-2">
+          <button
+            id="btn-help"
+            class="p-2 bg-white border border-slate-200 rounded-full hover:bg-slate-50 shadow-sm"
+            title="Hướng dẫn sử dụng"
+          >
+            <i data-lucide="help-circle" class="w-5 h-5 text-blue-500"></i>
+          </button>
+          <button
+            id="btn-settings"
+            class="p-2 bg-white border border-slate-200 rounded-full hover:bg-slate-50 shadow-sm"
+            title="Cài đặt API"
+          >
+            <i data-lucide="key" class="w-5 h-5 text-slate-600"></i>
+          </button>
+          <div
+            id="lang-toggle"
+            class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-full text-sm font-medium hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <i data-lucide="languages" class="w-4 h-4"></i>
+            <span id="lang-text">Tiếng Việt</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-7 space-y-6">
+          <div
+            class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100"
+          >
+            <label
+              class="block text-sm font-semibold mb-3 flex items-center gap-2 text-rose-600"
+            >
+              <i data-lucide="mic" class="w-5 h-5"></i>
+              Nội dung Motivation
+            </label>
+            <textarea
+              id="main-text"
+              class="w-full h-48 p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all resize-none text-lg leading-relaxed"
+              placeholder="Nhập nội dung..."
+            ></textarea>
+          </div>
+
+          <div
+            class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-6"
+          >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label
+                  class="block text-sm font-semibold mb-2 flex items-center gap-2 text-blue-600"
+                >
+                  <i data-lucide="settings-2" class="w-5 h-5"></i>
+                  Tone giọng
+                </label>
+                <select
+                  id="tone-select"
+                  class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none"
+                >
+                  <option value="inspiring and deep">
+                    Truyền cảm hứng & Sâu lắng
+                  </option>
+                  <option value="energetic and fast">
+                    Năng lượng & Mạnh mẽ
+                  </option>
+                  <option value="calm and soft">Nhẹ nhàng & Thư giãn</option>
+                  <option value="emotional and sincere">
+                    Chân thành & Xúc động
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label
+                  class="block text-sm font-semibold mb-2 flex items-center gap-2 text-indigo-600"
+                >
+                  <i data-lucide="volume-2" class="w-5 h-5"></i>
+                  Giọng đọc (Phòng thí nghiệm Edge)
+                </label>
+                <select
+                  id="voice-select"
+                  class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none"
+                >
+                  <optgroup label="Tiếng Việt">
+                    <option value="vi-VN-HoaiNamNeural">
+                      Hoài Nam (Nam - Trầm ấm)
+                    </option>
+                    <option value="vi-VN-NamMinhNeural">
+                      Nam Minh (Nam - Chững chạc)
+                    </option>
+                  </optgroup>
+                  <optgroup label="Tiếng Anh">
+                    <option value="en-US-AriaNeural">
+                      Aria (Nữ - Truyền cảm)
+                    </option>
+                    <option value="en-US-GuyNeural">Guy (Nam - Mạnh mẽ)</option>
+                    <option value="en-US-JennyNeural">
+                      Jenny (Nữ - Nhẹ nhàng)
+                    </option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <label
+                  class="text-sm font-semibold flex items-center gap-2 text-emerald-600"
+                >
+                  <i data-lucide="gauge" class="w-5 h-5"></i>
+                  Tốc độ đọc
+                </label>
+                <span
+                  id="speed-label"
+                  class="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-600 rounded"
+                  >Bình thường</span
+                >
+              </div>
+              <input
+                type="range"
+                id="speed-slider"
+                min="0"
+                max="4"
+                step="1"
+                value="2"
+                class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-4">
+            <button
+              id="btn-voice"
+              class="flex-1 w-full py-4 bg-rose-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-rose-700 active:scale-95 transition-all shadow-lg"
+            >
+              <i data-lucide="volume-2" class="w-5 h-5"></i>
+              <span>Tạo giọng nói miễn phí</span>
+            </button>
+            <button
+              id="btn-image"
+              class="w-full sm:w-auto px-6 py-4 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 active:scale-95 transition-all"
+            >
+              <i data-lucide="image" class="w-5 h-5"></i>
+              <span>Tạo ảnh Postcard</span>
+            </button>
+          </div>
+
+          <div
+            id="error-msg"
+            class="hidden p-4 bg-rose-50 text-rose-600 rounded-xl text-sm border border-rose-100 font-medium"
+          ></div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="lg:col-span-5">
+          <div class="sticky top-8 space-y-6">
+            <div
+              id="postcard-preview"
+              class="relative aspect-[4/5] w-full bg-slate-200 rounded-3xl overflow-hidden shadow-2xl border-4 border-white flex flex-col items-center justify-center p-8 text-center text-slate-400"
+            >
+              <i data-lucide="image" class="w-16 h-16 mb-4 opacity-20"></i>
+              <p class="text-sm">Ảnh postcard sẽ hiển thị tại đây</p>
+
+              <div
+                id="text-overlay"
+                class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-8 text-left hidden"
+              >
+                <p
+                  id="preview-text-display"
+                  class="text-white text-xl font-medium italic leading-relaxed line-clamp-4"
+                ></p>
+              </div>
+            </div>
+
+            <div
+              id="audio-card"
+              class="hidden bg-white rounded-2xl p-6 shadow-lg border border-slate-100 flex flex-col gap-4"
+            >
+              <div class="flex items-center justify-between">
+                <span
+                  class="text-sm font-bold text-slate-800 uppercase tracking-wider"
+                  >Audio Result</span
+                >
+                <button
+                  id="btn-download"
+                  class="p-2 text-slate-500 hover:text-rose-600"
+                >
+                  <i data-lucide="download" class="w-5 h-5"></i>
+                </button>
+              </div>
+              <audio id="audio-player" controls class="w-full h-10"></audio>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Key Modal -->
+    <div id="api-modal" class="modal">
+      <div
+        class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl border border-slate-100 space-y-4"
+      >
+        <h2 class="text-xl font-bold flex items-center gap-2">
+          <i data-lucide="key" class="text-amber-500"></i> Cấu hình API Key
+        </h2>
+        <p class="text-sm text-slate-500">
+          <strong>Lưu ý:</strong> Chức năng giọng nói hiện đã miễn phí (Edge
+          TTS). Bạn chỉ cần dán API Key nếu muốn sử dụng chức năng
+          <strong>Tạo ảnh Postcard</strong>.
+        </p>
+        <input
+          type="password"
+          id="api-input"
+          class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500"
+          placeholder="AIzaSy..."
+        />
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            id="btn-save-api"
+            class="flex-1 w-full py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-all"
+          >
+            Lưu cài đặt
+          </button>
+          <button
+            id="btn-close-modal"
+            class="w-full sm:w-auto px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+      <div
+        class="bg-white rounded-2xl p-6 md:p-8 max-w-2xl w-full mx-4 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto"
+      >
+        <h2
+          class="text-xl md:text-2xl font-bold flex items-center gap-2 text-slate-800"
+        >
+          <i data-lucide="book-open" class="text-blue-500"></i> Hướng dẫn sử
+          dụng
+        </h2>
+
+        <div
+          class="space-y-4 text-slate-600 text-sm md:text-base leading-relaxed"
+        >
+          <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+            <h3 class="font-bold text-blue-800 mb-2 flex items-center gap-2">
+              <i data-lucide="key" class="w-4 h-4"></i> 1. Cài đặt API Key
+            </h3>
+            <p>
+              Để sử dụng, bạn cần có <strong>Gemini API Key</strong> từ Google
+              AI Studio. Nhấn vào biểu tượng chìa khóa ở góc phải trên cùng, dán
+              key vào và lưu lại. Key sẽ chỉ lưu trữ cục bộ trên trình duyệt của
+              bạn.
+            </p>
+          </div>
+
+          <div class="p-4 bg-rose-50 rounded-xl border border-rose-100">
+            <h3 class="font-bold text-rose-800 mb-2 flex items-center gap-2">
+              <i data-lucide="mic" class="w-4 h-4"></i> 2. Tạo giọng nói AI
+            </h3>
+            <ul class="list-disc list-inside space-y-1 ml-1">
+              <li>Nhập nội dung văn bản bạn muốn chuyển thành giọng nói.</li>
+              <li>
+                Chọn <strong>Tone giọng</strong> (cảm xúc) và
+                <strong>Voice</strong> (nhân vật).
+              </li>
+              <li>Điều chỉnh <strong>Tốc độ đọc</strong> phù hợp.</li>
+              <li>
+                Nhấn <strong>Tạo giọng nói AI</strong> và chờ kết quả. Bạn có
+                thể nghe thử hoặc tải file âm thanh (.wav) về máy.
+              </li>
+            </ul>
+          </div>
+
+          <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+            <h3 class="font-bold text-emerald-800 mb-2 flex items-center gap-2">
+              <i data-lucide="image" class="w-4 h-4"></i> 3. Tạo ảnh Postcard
+            </h3>
+            <p>
+              Nhấn <strong>Tạo ảnh Postcard</strong> để AI tự động vẽ một bức
+              ảnh nền phong cách cinematic, kèm theo đoạn text của bạn hiển thị
+              đẹp mắt bên trên.
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <h3 class="font-bold text-slate-800 mb-2 flex items-center gap-2">
+              <i data-lucide="languages" class="w-4 h-4"></i> 4. Ngôn ngữ
+            </h3>
+            <p>
+              Hỗ trợ đổi gợi ý bằng tiếng Việt và tiếng Anh ở góc trên. Bạn có
+              thể nhập prompt bằng bất kỳ ngôn ngữ nào AI cũng hiểu.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-4">
+          <button
+            id="btn-close-help"
+            class="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 w-full sm:w-auto"
+          >
+            Đã hiểu
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Lấy API Key từ localStorage nếu có, nếu không thì lấy từ môi trường (nếu có)
+      let USER_API_KEY = localStorage.getItem("soulvoice_api_key") || "";
+      const SYSTEM_API_KEY = ""; // Môi trường Preview
+
+      function getApiKey() {
+        return USER_API_KEY || SYSTEM_API_KEY;
+      }
+
+      let currentLang = "vi";
+      let currentAudioBlob = null;
+      const speeds = ["very slow", "slow", "normal", "fast", "very fast"];
+      const speedVN = ["Rất chậm", "Chậm", "Bình thường", "Nhanh", "Rất nhanh"];
+
+      lucide.createIcons();
+
+      // Elements
+      const mainText = document.getElementById("main-text");
+      const btnVoice = document.getElementById("btn-voice");
+      const btnImage = document.getElementById("btn-image");
+      const errorMsg = document.getElementById("error-msg");
+      const postcardPreview = document.getElementById("postcard-preview");
+      const textOverlay = document.getElementById("text-overlay");
+      const previewDisplay = document.getElementById("preview-text-display");
+      const audioCard = document.getElementById("audio-card");
+      const audioPlayer = document.getElementById("audio-player");
+      const speedSlider = document.getElementById("speed-slider");
+      const speedLabel = document.getElementById("speed-label");
+      const apiModal = document.getElementById("api-modal");
+      const apiInput = document.getElementById("api-input");
+      const helpModal = document.getElementById("help-modal");
+
+      // Modal Logic
+      document.getElementById("btn-settings").addEventListener("click", () => {
+        apiInput.value = USER_API_KEY;
+        apiModal.classList.add("active");
+      });
+      document
+        .getElementById("btn-close-modal")
+        .addEventListener("click", () => apiModal.classList.remove("active"));
+      document.getElementById("btn-save-api").addEventListener("click", () => {
+        USER_API_KEY = apiInput.value.trim();
+        localStorage.setItem("soulvoice_api_key", USER_API_KEY);
+        apiModal.classList.remove("active");
+        hideError();
+      });
+
+      // Help Modal Logic
+      document.getElementById("btn-help").addEventListener("click", () => {
+        helpModal.classList.add("active");
+      });
+      document
+        .getElementById("btn-close-help")
+        .addEventListener("click", () => {
+          helpModal.classList.remove("active");
+        });
+
+      function getEdgeTTS(text, voice, speed) {
+        return new Promise((resolve, reject) => {
+          const requestId = Date.now().toString(16);
+          const socket = new WebSocket(
+            `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4&ConnectionId=${requestId}`,
+          );
+
+          let audioData = [];
+
+          socket.onopen = () => {
+            const config = {
+              context: {
+                synthesis: {
+                  audio: {
+                    metadataoptions: {
+                      sentenceBoundaryEnabled: "false",
+                      wordBoundaryEnabled: "false",
+                    },
+                    outputFormat: "audio-24khz-48kbitrate-mono-mp3",
+                  },
+                },
+              },
+            };
+            socket.send(
+              `Content-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n${JSON.stringify(config)}`,
+            );
+
+            // Adjust pitch/rate based on our slider (0 to 4, 2 is normal)
+            const rateValue = (speed - 2) * 20; // -40%, -20%, 0%, +20%, +40%
+            const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voice}'><prosody rate='${rateValue}%' pitch='0%'>${text}</prosody></voice></speak>`;
+            socket.send(
+              `X-RequestId:${requestId}\r\nContent-Type:application/ssml+xml\r\nPath:ssml\r\n\r\n${ssml}`,
+            );
+          };
+
+          socket.onmessage = (event) => {
+            if (typeof event.data === "string") {
+              if (event.data.includes("Path:turn.end")) {
+                socket.close();
+                const blob = new Blob(audioData, { type: "audio/mpeg" });
+                resolve(blob);
+              }
+            } else if (
+              event.data instanceof Blob ||
+              event.data instanceof ArrayBuffer
+            ) {
+              const data =
+                event.data instanceof ArrayBuffer ? event.data : event.data;
+              // Edge TTS sends binary messages with a header. We need to strip the 1st segment (header).
+              // The header is usually 2 bytes of offset/length.
+              // For simplicity, we can use a more robust way by checking the Path:audio metadata
+              // but usually the binary data is just audio after a certain point.
+              // A better way is to convert to arraybuffer and slice:
+              const reader = new FileReader();
+              reader.onload = () => {
+                const buffer = reader.result;
+                const view = new DataView(buffer);
+                const headerLength = view.getUint16(0);
+                const audioPart = buffer.slice(headerLength + 2);
+                audioData.push(audioPart);
+              };
+              reader.readAsArrayBuffer(event.data);
+            }
+          };
+
+          socket.onerror = (err) => reject(err);
+        });
+      }
+
+      // Simplified PCM to WAV remains for legacy but we use Blob for MP3 from Edge
+      function pcmToWav(pcmData, sampleRate) {
+        const buffer = new ArrayBuffer(44 + pcmData.length * 2);
+        const view = new DataView(buffer);
+        const writeString = (offset, string) => {
+          for (let i = 0; i < string.length; i++)
+            view.setUint8(offset + i, string.charCodeAt(i));
+        };
+        writeString(0, "RIFF");
+        view.setUint32(4, 36 + pcmData.length * 2, true);
+        writeString(8, "WAVE");
+        writeString(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, "data");
+        view.setUint32(40, pcmData.length * 2, true);
+        for (let i = 0; i < pcmData.length; i++)
+          view.setInt16(44 + i * 2, pcmData[i], true);
+        return new Blob([buffer], { type: "audio/wav" });
+      }
+
+      async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (err) {
+          if (retries > 0) {
+            await new Promise((r) => setTimeout(r, backoff));
+            return fetchWithRetry(url, options, retries - 1, backoff * 2);
+          }
+          throw err;
+        }
+      }
+
+      speedSlider.addEventListener("input", () => {
+        speedLabel.innerText = speedVN[speedSlider.value];
+      });
+
+      btnVoice.addEventListener("click", async () => {
+        const text = mainText.value.trim();
+        if (!text) return showError("Vui lòng nhập nội dung.");
+
+        btnVoice.disabled = true;
+        btnVoice.innerHTML =
+          '<i class="animate-spin" data-lucide="loader-2"></i>';
+        lucide.createIcons();
+        hideError();
+
+        const voice = document.getElementById("voice-select").value;
+        const speed = speedSlider.value; // Numeric 0-4
+
+        try {
+          currentAudioBlob = await getEdgeTTS(text, voice, speed);
+          audioPlayer.src = URL.createObjectURL(currentAudioBlob);
+          audioCard.classList.remove("hidden");
+          textOverlay.classList.remove("hidden");
+          previewDisplay.innerText = text;
+
+          // Scroll to the result on mobile
+          if (window.innerWidth < 1024) {
+            setTimeout(() => {
+              audioCard.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+              });
+            }, 100);
+          }
+        } catch (err) {
+          console.error(err);
+          showError(
+            "Lỗi khi tạo giọng nói. Vui lòng kiểm tra kết nối mạng (Edge TTS cần internet).",
+          );
+        } finally {
+          btnVoice.disabled = false;
+          btnVoice.innerHTML =
+            '<i data-lucide="volume-2"></i> Tạo giọng nói miễn phí';
+          lucide.createIcons();
+        }
+      });
+
+      btnImage.addEventListener("click", async () => {
+        btnImage.disabled = true;
+        btnImage.innerHTML =
+          '<i class="animate-spin" data-lucide="loader-2"></i>';
+        lucide.createIcons();
+
+        // Encode the prompt for the URL
+        const prompt = encodeURIComponent(
+          "Cinematic postcard style, a 30-year-old woman with long straight black hair, looking thoughtfully at the horizon, soft morning light, emotional atmosphere, aesthetic background, high quality, motivational vibe.",
+        );
+
+        // Add a random seed to avoid caching
+        const seed = Math.floor(Math.random() * 1000000);
+        const imageUrl = `https://pollinations.ai/p/${prompt}?width=800&height=1000&seed=${seed}&model=flux`;
+
+        try {
+          // Preload the image to ensure it's fully loaded before displaying
+          const img = new Image();
+          img.onload = () => {
+            postcardPreview.innerHTML = `<img src="${imageUrl}" class="w-full h-full object-cover">`;
+            postcardPreview.appendChild(textOverlay);
+            textOverlay.classList.remove("hidden");
+            previewDisplay.innerText = mainText.value || "Motivation Postcard";
+
+            // Scroll to the result on mobile
+            if (window.innerWidth < 1024) {
+              setTimeout(() => {
+                postcardPreview.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }, 100);
+            }
+
+            btnImage.disabled = false;
+            btnImage.innerHTML = '<i data-lucide="image"></i> Tạo ảnh Postcard';
+            lucide.createIcons();
+          };
+
+          img.onerror = () => {
+            showError("Lỗi khi tải hình ảnh từ server.");
+            btnImage.disabled = false;
+            btnImage.innerHTML = '<i data-lucide="image"></i> Tạo ảnh Postcard';
+            lucide.createIcons();
+          };
+
+          img.src = imageUrl;
+        } catch (err) {
+          showError("Lỗi khi tạo hình ảnh.");
+          btnImage.disabled = false;
+          btnImage.innerHTML = '<i data-lucide="image"></i> Tạo ảnh Postcard';
+          lucide.createIcons();
+        }
+      });
+
+      document.getElementById("btn-download").addEventListener("click", () => {
+        if (currentAudioBlob) {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(currentAudioBlob);
+          a.download = `voice_motivation_${Date.now()}.mp3`;
+          a.click();
+        }
+      });
+
+      function showError(msg) {
+        errorMsg.innerText = msg;
+        errorMsg.classList.remove("hidden");
+      }
+
+      function hideError() {
+        errorMsg.classList.add("hidden");
+      }
+
+      document.getElementById("lang-toggle").addEventListener("click", () => {
+        currentLang = currentLang === "vi" ? "en" : "vi";
+        document.getElementById("lang-text").innerText =
+          currentLang === "vi" ? "Tiếng Việt" : "English";
+        mainText.placeholder =
+          currentLang === "vi"
+            ? "Ví dụ: Không ai là quá bận..."
+            : "Example: Nobody is too busy...";
+      });
+    </script>
+  </body>
+</html>
