@@ -64,6 +64,13 @@
         </div>
         <div class="flex w-full md:w-auto items-center justify-end gap-2">
           <button
+            id="btn-help"
+            class="p-2 bg-white border border-slate-200 rounded-full hover:bg-slate-50 shadow-sm"
+            title="Hướng dẫn sử dụng"
+          >
+            <i data-lucide="help-circle" class="w-5 h-5 text-blue-500"></i>
+          </button>
+          <button
             id="btn-settings"
             class="p-2 bg-white border border-slate-200 rounded-full hover:bg-slate-50 shadow-sm"
             title="Cài đặt API"
@@ -273,6 +280,84 @@
       </div>
     </div>
 
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+      <div
+        class="bg-white rounded-2xl p-6 md:p-8 max-w-2xl w-full mx-4 shadow-2xl border border-slate-100 space-y-4 max-h-[90vh] overflow-y-auto"
+      >
+        <h2
+          class="text-xl md:text-2xl font-bold flex items-center gap-2 text-slate-800"
+        >
+          <i data-lucide="book-open" class="text-blue-500"></i> Hướng dẫn sử
+          dụng
+        </h2>
+
+        <div
+          class="space-y-4 text-slate-600 text-sm md:text-base leading-relaxed"
+        >
+          <div class="p-4 bg-blue-50 rounded-xl border border-blue-100">
+            <h3 class="font-bold text-blue-800 mb-2 flex items-center gap-2">
+              <i data-lucide="key" class="w-4 h-4"></i> 1. Cài đặt API Key
+            </h3>
+            <p>
+              Để sử dụng, bạn cần có <strong>Gemini API Key</strong> từ Google
+              AI Studio. Nhấn vào biểu tượng chìa khóa ở góc phải trên cùng, dán
+              key vào và lưu lại. Key sẽ chỉ lưu trữ cục bộ trên trình duyệt của
+              bạn.
+            </p>
+          </div>
+
+          <div class="p-4 bg-rose-50 rounded-xl border border-rose-100">
+            <h3 class="font-bold text-rose-800 mb-2 flex items-center gap-2">
+              <i data-lucide="mic" class="w-4 h-4"></i> 2. Tạo giọng nói AI
+            </h3>
+            <ul class="list-disc list-inside space-y-1 ml-1">
+              <li>Nhập nội dung văn bản bạn muốn chuyển thành giọng nói.</li>
+              <li>
+                Chọn <strong>Tone giọng</strong> (cảm xúc) và
+                <strong>Voice</strong> (nhân vật).
+              </li>
+              <li>Điều chỉnh <strong>Tốc độ đọc</strong> phù hợp.</li>
+              <li>
+                Nhấn <strong>Tạo giọng nói AI</strong> và chờ kết quả. Bạn có
+                thể nghe thử hoặc tải file âm thanh (.wav) về máy.
+              </li>
+            </ul>
+          </div>
+
+          <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+            <h3 class="font-bold text-emerald-800 mb-2 flex items-center gap-2">
+              <i data-lucide="image" class="w-4 h-4"></i> 3. Tạo ảnh Postcard
+            </h3>
+            <p>
+              Nhấn <strong>Tạo ảnh Postcard</strong> để AI tự động vẽ một bức
+              ảnh nền phong cách cinematic, kèm theo đoạn text của bạn hiển thị
+              đẹp mắt bên trên.
+            </p>
+          </div>
+
+          <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+            <h3 class="font-bold text-slate-800 mb-2 flex items-center gap-2">
+              <i data-lucide="languages" class="w-4 h-4"></i> 4. Ngôn ngữ
+            </h3>
+            <p>
+              Hỗ trợ đổi gợi ý bằng tiếng Việt và tiếng Anh ở góc trên. Bạn có
+              thể nhập prompt bằng bất kỳ ngôn ngữ nào AI cũng hiểu.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-4">
+          <button
+            id="btn-close-help"
+            class="px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 w-full sm:w-auto"
+          >
+            Đã hiểu
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script>
       // Lấy API Key từ localStorage nếu có, nếu không thì lấy từ môi trường (nếu có)
       let USER_API_KEY = localStorage.getItem("soulvoice_api_key") || "";
@@ -303,6 +388,7 @@
       const speedLabel = document.getElementById("speed-label");
       const apiModal = document.getElementById("api-modal");
       const apiInput = document.getElementById("api-input");
+      const helpModal = document.getElementById("help-modal");
 
       // Modal Logic
       document.getElementById("btn-settings").addEventListener("click", () => {
@@ -318,6 +404,16 @@
         apiModal.classList.remove("active");
         hideError();
       });
+
+      // Help Modal Logic
+      document.getElementById("btn-help").addEventListener("click", () => {
+        helpModal.classList.add("active");
+      });
+      document
+        .getElementById("btn-close-help")
+        .addEventListener("click", () => {
+          helpModal.classList.remove("active");
+        });
 
       function pcmToWav(pcmData, sampleRate) {
         const buffer = new ArrayBuffer(44 + pcmData.length * 2);
