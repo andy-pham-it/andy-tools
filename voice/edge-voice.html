@@ -138,30 +138,19 @@
                   class="block text-sm font-semibold mb-2 flex items-center gap-2 text-indigo-600"
                 >
                   <i data-lucide="volume-2" class="w-5 h-5"></i>
-                  Giọng đọc (Phòng thí nghiệm Edge)
+                  Bộ máy giọng nói (Miễn phí)
                 </label>
                 <select
                   id="voice-select"
                   class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none"
                 >
-                  <optgroup label="Tiếng Việt">
-                    <option value="vi-VN-HoaiNamNeural">
-                      Hoài Nam (Nam - Trầm ấm)
-                    </option>
-                    <option value="vi-VN-NamMinhNeural">
-                      Nam Minh (Nam - Chững chạc)
-                    </option>
-                  </optgroup>
-                  <optgroup label="Tiếng Anh">
-                    <option value="en-US-AriaNeural">
-                      Aria (Nữ - Truyền cảm)
-                    </option>
-                    <option value="en-US-GuyNeural">Guy (Nam - Mạnh mẽ)</option>
-                    <option value="en-US-JennyNeural">
-                      Jenny (Nữ - Nhẹ nhàng)
-                    </option>
-                  </optgroup>
+                  <!-- Voices will be populated by JS -->
+                  <option value="google-vi">Google Tiếng Việt (Ổn định)</option>
                 </select>
+                <p class="text-[10px] text-slate-400 mt-2 italic">
+                  * Mẹo: Dùng trình duyệt <strong>Microsoft Edge</strong> để có
+                  giọng đọc "Natural" cực hay.
+                </p>
               </div>
             </div>
 
@@ -429,76 +418,88 @@
           helpModal.classList.remove("active");
         });
 
-      function getEdgeTTS(text, voice, speed) {
+      const synth = window.speechSynthesis;
+      let voices = [];
+
+      function populateVoiceList() {
+        voices = synth.getVoices();
+        const voiceSelect = document.getElementById("voice-select");
+        const currentVal = voiceSelect.value;
+        voiceSelect.innerHTML = "";
+
+        // Ưu tiên các giọng Neural/Online (có trên Edge hoặc cài thêm)
+        const preferredVoices = voices.filter(
+          (v) => v.name.includes("Online") || v.name.includes("Natural"),
+        );
+        const localVoices = voices.filter(
+          (v) => !v.name.includes("Online") && !v.name.includes("Natural"),
+        );
+
+        if (preferredVoices.length > 0) {
+          const optGroup = document.createElement("optgroup");
+          optGroup.label = "Giọng đọc Cao cấp (Khuyên dùng)";
+          preferredVoices.forEach((voice) => {
+            const option = document.createElement("option");
+            option.textContent = `${voice.name} (${voice.lang})`;
+            option.value = voice.name;
+            optGroup.appendChild(option);
+          });
+          voiceSelect.appendChild(optGroup);
+        }
+
+        const optGroupLocal = document.createElement("optgroup");
+        optGroupLocal.label = "Giọng đọc Tiêu chuẩn";
+        localVoices.forEach((voice) => {
+          const option = document.createElement("option");
+          option.textContent = `${voice.name} (${voice.lang})`;
+          option.value = voice.name;
+          optGroupLocal.appendChild(option);
+        });
+        voiceSelect.appendChild(optGroupLocal);
+
+        // Thêm option dự phòng
+        const optGroupFallback = document.createElement("optgroup");
+        optGroupFallback.label = "Dự phòng (Google Translate)";
+        const fallbackOption = document.createElement("option");
+        fallbackOption.textContent = "Google Translate TTS (Mọi trình duyệt)";
+        fallbackOption.value = "google-translate";
+        optGroupFallback.appendChild(fallbackOption);
+        voiceSelect.appendChild(optGroupFallback);
+
+        if (currentVal) voiceSelect.value = currentVal;
+      }
+
+      populateVoiceList();
+      if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoiceList;
+      }
+
+      async function speakText(text, voiceName, speed) {
         return new Promise((resolve, reject) => {
-          const requestId = Date.now().toString(16);
-          const socket = new WebSocket(
-            `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4&ConnectionId=${requestId}`,
-          );
+          if (voiceName === "google-translate") {
+            const lang = currentLang === "vi" ? "vi" : "en";
+            const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob`;
+            audioPlayer.src = url;
+            resolve();
+            return;
+          }
 
-          let audioData = [];
+          const utterance = new SpeechSynthesisUtterance(text);
+          const selectedVoice = voices.find((v) => v.name === voiceName);
+          if (selectedVoice) utterance.voice = selectedVoice;
 
-          socket.onopen = () => {
-            const config = {
-              context: {
-                synthesis: {
-                  audio: {
-                    metadataoptions: {
-                      sentenceBoundaryEnabled: "false",
-                      wordBoundaryEnabled: "false",
-                    },
-                    outputFormat: "audio-24khz-48kbitrate-mono-mp3",
-                  },
-                },
-              },
-            };
-            socket.send(
-              `Content-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n${JSON.stringify(config)}`,
-            );
+          // Speed: 0 -> 0.5, 2 -> 1.0, 4 -> 2.0
+          utterance.rate = 0.5 + speed * 0.375;
 
-            // Adjust pitch/rate based on our slider (0 to 4, 2 is normal)
-            const rateValue = (speed - 2) * 20; // -40%, -20%, 0%, +20%, +40%
-            const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'><voice name='${voice}'><prosody rate='${rateValue}%' pitch='0%'>${text}</prosody></voice></speak>`;
-            socket.send(
-              `X-RequestId:${requestId}\r\nContent-Type:application/ssml+xml\r\nPath:ssml\r\n\r\n${ssml}`,
-            );
-          };
+          utterance.onend = () => resolve();
+          utterance.onerror = (err) => reject(err);
 
-          socket.onmessage = (event) => {
-            if (typeof event.data === "string") {
-              if (event.data.includes("Path:turn.end")) {
-                socket.close();
-                const blob = new Blob(audioData, { type: "audio/mpeg" });
-                resolve(blob);
-              }
-            } else if (
-              event.data instanceof Blob ||
-              event.data instanceof ArrayBuffer
-            ) {
-              const data =
-                event.data instanceof ArrayBuffer ? event.data : event.data;
-              // Edge TTS sends binary messages with a header. We need to strip the 1st segment (header).
-              // The header is usually 2 bytes of offset/length.
-              // For simplicity, we can use a more robust way by checking the Path:audio metadata
-              // but usually the binary data is just audio after a certain point.
-              // A better way is to convert to arraybuffer and slice:
-              const reader = new FileReader();
-              reader.onload = () => {
-                const buffer = reader.result;
-                const view = new DataView(buffer);
-                const headerLength = view.getUint16(0);
-                const audioPart = buffer.slice(headerLength + 2);
-                audioData.push(audioPart);
-              };
-              reader.readAsArrayBuffer(event.data);
-            }
-          };
-
-          socket.onerror = (err) => reject(err);
+          synth.cancel(); // Dừng các giọng nói đang chờ
+          synth.speak(utterance);
+          resolve(); // Resolve sớm để hiện UI kết quả
         });
       }
 
-      // Simplified PCM to WAV remains for legacy but we use Blob for MP3 from Edge
       function pcmToWav(pcmData, sampleRate) {
         const buffer = new ArrayBuffer(44 + pcmData.length * 2);
         const view = new DataView(buffer);
@@ -556,16 +557,23 @@
         const speed = speedSlider.value; // Numeric 0-4
 
         try {
-          currentAudioBlob = await getEdgeTTS(text, voice, speed);
-          audioPlayer.src = URL.createObjectURL(currentAudioBlob);
-          audioCard.classList.remove("hidden");
+          await speakText(text, voice, speed);
+
+          // Đối với Web Speech API, chúng ta không có Blob để download trực tiếp như API
+          if (voice === "google-translate") {
+            audioCard.classList.remove("hidden");
+          } else {
+            // Hiển thị card audio đơn giản (Web Speech API tự phát trực tiếp)
+            audioCard.classList.add("hidden");
+          }
+
           textOverlay.classList.remove("hidden");
           previewDisplay.innerText = text;
 
           // Scroll to the result on mobile
           if (window.innerWidth < 1024) {
             setTimeout(() => {
-              audioCard.scrollIntoView({
+              textOverlay.scrollIntoView({
                 behavior: "smooth",
                 block: "nearest",
               });
@@ -574,7 +582,7 @@
         } catch (err) {
           console.error(err);
           showError(
-            "Lỗi khi tạo giọng nói. Vui lòng kiểm tra kết nối mạng (Edge TTS cần internet).",
+            "Lỗi khi phát giọng nói. Vui lòng thử lại hoặc chọn 'Google Translate' trong danh sách.",
           );
         } finally {
           btnVoice.disabled = false;
