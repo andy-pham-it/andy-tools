@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SoulVoice Studio - Standalone Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+      body {
+        font-family: "Inter", sans-serif;
+      }
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #10b981;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 50;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal.active {
+        display: flex;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-50 text-slate-900 min-h-screen">
+    <div id="app" class="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
+      <!-- Header -->
+      <header
+        class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
+      >
+        <div class="w-full flex justify-between items-start">
+          <div>
+            <h1
+              class="text-2xl md:text-3xl font-bold text-slate-800 flex items-center gap-2"
+            >
+              <i
+                data-lucide="sparkles"
+                class="text-amber-500 w-6 h-6 md:w-8 md:h-8"
+              ></i>
+              SoulVoice Studio
+            </h1>
+            <p class="text-sm md:text-base text-slate-500 mt-1">
+              Phiên bản hoạt động độc lập (Standalone)
+            </p>
+          </div>
+        </div>
+        <div class="flex w-full md:w-auto items-center justify-end gap-2">
+          <button
+            id="btn-settings"
+            class="p-2 bg-white border border-slate-200 rounded-full hover:bg-slate-50 shadow-sm"
+            title="Cài đặt API"
+          >
+            <i data-lucide="key" class="w-5 h-5 text-slate-600"></i>
+          </button>
+          <div
+            id="lang-toggle"
+            class="cursor-pointer flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-full text-sm font-medium hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <i data-lucide="languages" class="w-4 h-4"></i>
+            <span id="lang-text">Tiếng Việt</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Left Column -->
+        <div class="lg:col-span-7 space-y-6">
+          <div
+            class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100"
+          >
+            <label
+              class="block text-sm font-semibold mb-3 flex items-center gap-2 text-rose-600"
+            >
+              <i data-lucide="mic" class="w-5 h-5"></i>
+              Nội dung Motivation
+            </label>
+            <textarea
+              id="main-text"
+              class="w-full h-48 p-4 bg-slate-50 rounded-xl border border-slate-200 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all resize-none text-lg leading-relaxed"
+              placeholder="Nhập nội dung..."
+            ></textarea>
+          </div>
+
+          <div
+            class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-6"
+          >
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label
+                  class="block text-sm font-semibold mb-2 flex items-center gap-2 text-blue-600"
+                >
+                  <i data-lucide="settings-2" class="w-5 h-5"></i>
+                  Tone giọng
+                </label>
+                <select
+                  id="tone-select"
+                  class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none"
+                >
+                  <option value="inspiring and deep">
+                    Truyền cảm hứng & Sâu lắng
+                  </option>
+                  <option value="energetic and fast">
+                    Năng lượng & Mạnh mẽ
+                  </option>
+                  <option value="calm and soft">Nhẹ nhàng & Thư giãn</option>
+                  <option value="emotional and sincere">
+                    Chân thành & Xúc động
+                  </option>
+                </select>
+              </div>
+              <div>
+                <label
+                  class="block text-sm font-semibold mb-2 flex items-center gap-2 text-indigo-600"
+                >
+                  <i data-lucide="volume-2" class="w-5 h-5"></i>
+                  Voice (Ưu tiên Kore - Nữ 30t)
+                </label>
+                <select
+                  id="voice-select"
+                  class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 outline-none"
+                >
+                  <option value="Kore">Kore (Trầm ấm, trưởng thành)</option>
+                  <option value="Aoede">Aoede (Trong trẻo, trẻ)</option>
+                  <option value="Charon">Charon (Nam tính)</option>
+                  <option value="Leda">Leda (Điềm đạm)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <label
+                  class="text-sm font-semibold flex items-center gap-2 text-emerald-600"
+                >
+                  <i data-lucide="gauge" class="w-5 h-5"></i>
+                  Tốc độ đọc
+                </label>
+                <span
+                  id="speed-label"
+                  class="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-600 rounded"
+                  >Bình thường</span
+                >
+              </div>
+              <input
+                type="range"
+                id="speed-slider"
+                min="0"
+                max="4"
+                step="1"
+                value="2"
+                class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-4">
+            <button
+              id="btn-voice"
+              class="flex-1 w-full py-4 bg-rose-600 text-white rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-rose-700 active:scale-95 transition-all shadow-lg"
+            >
+              <i data-lucide="volume-2" class="w-5 h-5"></i>
+              <span>Tạo giọng nói AI</span>
+            </button>
+            <button
+              id="btn-image"
+              class="w-full sm:w-auto px-6 py-4 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 active:scale-95 transition-all"
+            >
+              <i data-lucide="image" class="w-5 h-5"></i>
+              <span>Tạo ảnh Postcard</span>
+            </button>
+          </div>
+
+          <div
+            id="error-msg"
+            class="hidden p-4 bg-rose-50 text-rose-600 rounded-xl text-sm border border-rose-100 font-medium"
+          ></div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="lg:col-span-5">
+          <div class="sticky top-8 space-y-6">
+            <div
+              id="postcard-preview"
+              class="relative aspect-[4/5] w-full bg-slate-200 rounded-3xl overflow-hidden shadow-2xl border-4 border-white flex flex-col items-center justify-center p-8 text-center text-slate-400"
+            >
+              <i data-lucide="image" class="w-16 h-16 mb-4 opacity-20"></i>
+              <p class="text-sm">Ảnh postcard sẽ hiển thị tại đây</p>
+
+              <div
+                id="text-overlay"
+                class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-8 text-left hidden"
+              >
+                <p
+                  id="preview-text-display"
+                  class="text-white text-xl font-medium italic leading-relaxed line-clamp-4"
+                ></p>
+              </div>
+            </div>
+
+            <div
+              id="audio-card"
+              class="hidden bg-white rounded-2xl p-6 shadow-lg border border-slate-100 flex flex-col gap-4"
+            >
+              <div class="flex items-center justify-between">
+                <span
+                  class="text-sm font-bold text-slate-800 uppercase tracking-wider"
+                  >Audio Result</span
+                >
+                <button
+                  id="btn-download"
+                  class="p-2 text-slate-500 hover:text-rose-600"
+                >
+                  <i data-lucide="download" class="w-5 h-5"></i>
+                </button>
+              </div>
+              <audio id="audio-player" controls class="w-full h-10"></audio>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- API Key Modal -->
+    <div id="api-modal" class="modal">
+      <div
+        class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl border border-slate-100 space-y-4"
+      >
+        <h2 class="text-xl font-bold flex items-center gap-2">
+          <i data-lucide="key" class="text-amber-500"></i> Cấu hình API Key
+        </h2>
+        <p class="text-sm text-slate-500">
+          Để chạy file local, hãy dán API Key từ Google AI Studio của bạn vào
+          đây. Nó sẽ được lưu trên máy của bạn.
+        </p>
+        <input
+          type="password"
+          id="api-input"
+          class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-amber-500"
+          placeholder="AIzaSy..."
+        />
+        <div class="flex flex-col sm:flex-row gap-3">
+          <button
+            id="btn-save-api"
+            class="flex-1 w-full py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-all"
+          >
+            Lưu cài đặt
+          </button>
+          <button
+            id="btn-close-modal"
+            class="w-full sm:w-auto px-6 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200"
+          >
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Lấy API Key từ localStorage nếu có, nếu không thì lấy từ môi trường (nếu có)
+      let USER_API_KEY = localStorage.getItem("soulvoice_api_key") || "";
+      const SYSTEM_API_KEY = ""; // Môi trường Preview
+
+      function getApiKey() {
+        return USER_API_KEY || SYSTEM_API_KEY;
+      }
+
+      let currentLang = "vi";
+      let currentAudioBlob = null;
+      const speeds = ["very slow", "slow", "normal", "fast", "very fast"];
+      const speedVN = ["Rất chậm", "Chậm", "Bình thường", "Nhanh", "Rất nhanh"];
+
+      lucide.createIcons();
+
+      // Elements
+      const mainText = document.getElementById("main-text");
+      const btnVoice = document.getElementById("btn-voice");
+      const btnImage = document.getElementById("btn-image");
+      const errorMsg = document.getElementById("error-msg");
+      const postcardPreview = document.getElementById("postcard-preview");
+      const textOverlay = document.getElementById("text-overlay");
+      const previewDisplay = document.getElementById("preview-text-display");
+      const audioCard = document.getElementById("audio-card");
+      const audioPlayer = document.getElementById("audio-player");
+      const speedSlider = document.getElementById("speed-slider");
+      const speedLabel = document.getElementById("speed-label");
+      const apiModal = document.getElementById("api-modal");
+      const apiInput = document.getElementById("api-input");
+
+      // Modal Logic
+      document.getElementById("btn-settings").addEventListener("click", () => {
+        apiInput.value = USER_API_KEY;
+        apiModal.classList.add("active");
+      });
+      document
+        .getElementById("btn-close-modal")
+        .addEventListener("click", () => apiModal.classList.remove("active"));
+      document.getElementById("btn-save-api").addEventListener("click", () => {
+        USER_API_KEY = apiInput.value.trim();
+        localStorage.setItem("soulvoice_api_key", USER_API_KEY);
+        apiModal.classList.remove("active");
+        hideError();
+      });
+
+      function pcmToWav(pcmData, sampleRate) {
+        const buffer = new ArrayBuffer(44 + pcmData.length * 2);
+        const view = new DataView(buffer);
+        const writeString = (offset, string) => {
+          for (let i = 0; i < string.length; i++)
+            view.setUint8(offset + i, string.charCodeAt(i));
+        };
+        writeString(0, "RIFF");
+        view.setUint32(4, 36 + pcmData.length * 2, true);
+        writeString(8, "WAVE");
+        writeString(12, "fmt ");
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, "data");
+        view.setUint32(40, pcmData.length * 2, true);
+        for (let i = 0; i < pcmData.length; i++)
+          view.setInt16(44 + i * 2, pcmData[i], true);
+        return new Blob([buffer], { type: "audio/wav" });
+      }
+
+      async function fetchWithRetry(url, options, retries = 5, backoff = 1000) {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          return await response.json();
+        } catch (err) {
+          if (retries > 0) {
+            await new Promise((r) => setTimeout(r, backoff));
+            return fetchWithRetry(url, options, retries - 1, backoff * 2);
+          }
+          throw err;
+        }
+      }
+
+      speedSlider.addEventListener("input", () => {
+        speedLabel.innerText = speedVN[speedSlider.value];
+      });
+
+      btnVoice.addEventListener("click", async () => {
+        const key = getApiKey();
+        if (!key)
+          return showError(
+            "Bạn chưa cài đặt API Key. Hãy bấm nút hình Chìa khóa ở góc trên để cấu hình.",
+          );
+
+        const text = mainText.value.trim();
+        if (!text) return showError("Vui lòng nhập nội dung.");
+
+        btnVoice.disabled = true;
+        btnVoice.innerHTML =
+          '<i class="animate-spin" data-lucide="loader-2"></i>';
+        lucide.createIcons();
+        hideError();
+
+        const tone = document.getElementById("tone-select").value;
+        const voice = document.getElementById("voice-select").value;
+        const speed = speeds[speedSlider.value];
+        const prompt = `Say in a ${tone} tone at a ${speed} pace: ${text}`;
+
+        try {
+          const result = await fetchWithRetry(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${key}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                  responseModalities: ["AUDIO"],
+                  speechConfig: {
+                    voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } },
+                  },
+                },
+              }),
+            },
+          );
+
+          const audioPart =
+            result.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+          if (audioPart) {
+            const sampleRate = (audioPart.mimeType.match(/rate=(\d+)/) || [
+              null,
+              24000,
+            ])[1];
+            const binary = atob(audioPart.data);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++)
+              bytes[i] = binary.charCodeAt(i);
+            const pcm16 = new Int16Array(bytes.buffer);
+
+            currentAudioBlob = pcmToWav(pcm16, parseInt(sampleRate));
+            audioPlayer.src = URL.createObjectURL(currentAudioBlob);
+            audioCard.classList.remove("hidden");
+            textOverlay.classList.remove("hidden");
+            previewDisplay.innerText = text;
+
+            // Scroll to the result on mobile
+            if (window.innerWidth < 1024) {
+              setTimeout(() => {
+                audioCard.scrollIntoView({
+                  behavior: "smooth",
+                  block: "nearest",
+                });
+              }, 100);
+            }
+          }
+        } catch (err) {
+          showError(
+            "Lỗi kết nối API. Hãy kiểm tra lại API Key hoặc mạng internet.",
+          );
+        } finally {
+          btnVoice.disabled = false;
+          btnVoice.innerHTML =
+            '<i data-lucide="volume-2"></i> Tạo giọng nói AI';
+          lucide.createIcons();
+        }
+      });
+
+      btnImage.addEventListener("click", async () => {
+        const key = getApiKey();
+        if (!key) return showError("Cần cấu hình API Key để tạo ảnh.");
+
+        btnImage.disabled = true;
+        btnImage.innerHTML =
+          '<i class="animate-spin" data-lucide="loader-2"></i>';
+        lucide.createIcons();
+
+        const prompt =
+          "Cinematic postcard style, a 30-year-old woman with long straight black hair, looking thoughtfully at the horizon, soft morning light, emotional atmosphere, aesthetic background, high quality, motivational vibe.";
+
+        try {
+          const result = await fetchWithRetry(
+            `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${key}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                instances: [{ prompt }],
+                parameters: { sampleCount: 1 },
+              }),
+            },
+          );
+
+          if (result.predictions?.[0]?.bytesBase64Encoded) {
+            const base64 = result.predictions[0].bytesBase64Encoded;
+            postcardPreview.innerHTML = `<img src="data:image/png;base64,${base64}" class="w-full h-full object-cover">`;
+            postcardPreview.appendChild(textOverlay);
+            textOverlay.classList.remove("hidden");
+            previewDisplay.innerText = mainText.value || "Motivation Postcard";
+
+            // Scroll to the result on mobile
+            if (window.innerWidth < 1024) {
+              setTimeout(() => {
+                postcardPreview.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }, 100);
+            }
+          }
+        } catch (err) {
+          showError("Lỗi khi tạo hình ảnh.");
+        } finally {
+          btnImage.disabled = false;
+          btnImage.innerHTML = '<i data-lucide="image"></i> Tạo ảnh Postcard';
+          lucide.createIcons();
+        }
+      });
+
+      document.getElementById("btn-download").addEventListener("click", () => {
+        if (currentAudioBlob) {
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(currentAudioBlob);
+          a.download = `voice_motivation_${Date.now()}.wav`;
+          a.click();
+        }
+      });
+
+      function showError(msg) {
+        errorMsg.innerText = msg;
+        errorMsg.classList.remove("hidden");
+      }
+
+      function hideError() {
+        errorMsg.classList.add("hidden");
+      }
+
+      document.getElementById("lang-toggle").addEventListener("click", () => {
+        currentLang = currentLang === "vi" ? "en" : "vi";
+        document.getElementById("lang-text").innerText =
+          currentLang === "vi" ? "Tiếng Việt" : "English";
+        mainText.placeholder =
+          currentLang === "vi"
+            ? "Ví dụ: Không ai là quá bận..."
+            : "Example: Nobody is too busy...";
+      });
+    </script>
+  </body>
+</html>
